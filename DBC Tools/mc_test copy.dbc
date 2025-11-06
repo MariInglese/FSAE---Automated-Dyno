@@ -1,0 +1,57 @@
+VERSION ""
+
+
+NS_ : 
+	NS_DESC_
+	CM_
+	BA_DEF_
+	BA_
+	VAL_
+	CAT_DEF_
+	CAT_
+	FILTER
+	BA_DEF_DEF_
+	EV_DATA_
+	ENVVAR_DATA_
+	SGTYPE_
+	SGTYPE_VAL_
+	BA_DEF_SGTYPE_
+	BA_SGTYPE_
+	SIG_TYPE_REF_
+	VAL_TABLE_
+	SIG_GROUP_
+	SIG_VALTYPE_
+	SIGTYPE_VALTYPE_
+	BO_TX_BU_
+	BA_DEF_REL_
+	BA_REL_
+	BA_DEF_DEF_REL_
+	BU_SG_REL_
+	BU_EV_REL_
+	BU_BO_REL_
+	SG_MUL_VAL_
+
+BS_:
+
+BU_: INV BMS VCU
+
+
+BO_ 176 fast: 8 Vector__XXX
+ SG_ INV_Fast_Torque_Command : 0|16@1- (0.1,0) [-3276.8|32767.7] "N.m" Vector__XXX
+ SG_ INV_Fast_Torque_Feedback : 16|16@1- (0.1,0) [-3276.8|3276.7] "N.m" Vector__XXX
+ SG_ motorspeed : 32|16@1- (1,0) [-32768|32767] "rpm" Vector__XXX
+ SG_ INV_Fast_DC_Bus_Voltage : 48|16@1- (0.1,0) [-3276.8|3276.7] "V" Vector__XXX
+
+
+
+CM_ BO_ 176 "To enable fast message set CAN ACTIVE MSGS HI WORD to 0xFFFE.  Setting to default value of 0xFFFF will disable the fast message.";
+CM_ SG_ 176 INV_Fast_Torque_Command "The commanded torque";
+CM_ SG_ 176 INV_Fast_Torque_Feedback "The estimated torque";
+CM_ SG_ 176 motorspeed "Motor speed";
+CM_ SG_ 176 INV_Fast_DC_Bus_Voltage "DC Bus Voltage";
+BA_DEF_ BO_  "GenMsgCycleTime" INT 0 100000;
+BA_DEF_  "BusType" STRING ;
+BA_DEF_DEF_  "GenMsgCycleTime" 0;
+BA_DEF_DEF_  "BusType" "CAN";
+BA_ "GenMsgCycleTime" BO_ 176 3;
+
