@@ -5,7 +5,7 @@ import logging
 import cantools
 import cantools.database
 
-from data.message_data import MessageData
+from message_data import MessageData
 
 class CANInterface:
     def __init__(self):
