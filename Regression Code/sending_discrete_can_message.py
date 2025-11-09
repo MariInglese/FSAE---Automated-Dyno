@@ -1,21 +1,10 @@
 # Importing libraries 
-import csv 
-import os
-import time
+import csv, os, time, math, can, cantools
 import cantools.database 
 from CANBase import CANInterface
 from message_data import MessageData
-
-import math
-import time
-
-import can,time
 from can.interfaces.pcan import pcan
 
-import cantools.database 
-
-import cantools
-import os
 
 # File path to i2 log 
 file_path = r'replay_log_2.1.csv'
