@@ -55,8 +55,8 @@ data = message.encode({
 })
 """
 data = message.encode({
-    'SGAMP1_ambientTemp': 20,
-    'SGAMP1_outputVoltage': 3,
+    'SGAMP1_ambientTemp': 100,
+    'SGAMP1_outputVoltage': -10000,
 })
 
 is_running = 1
@@ -67,7 +67,7 @@ with can.Bus(interface='pcan',
               bitrate=1000000,
               receive_own_messages=False) as bus:
     # Your code here
-    message = can.Message(arbitration_id=0x3F4, is_extended_id=False,
+    message = can.Message(arbitration_id=0x3F0, is_extended_id=False,
                           data=data)
 
     
@@ -76,6 +76,6 @@ with can.Bus(interface='pcan',
         if message is not None:
             print(f"{message.arbitration_id:X}: {message.data}")
             
-        time.sleep(0.001)
+        time.sleep(0.0001)
         
     
