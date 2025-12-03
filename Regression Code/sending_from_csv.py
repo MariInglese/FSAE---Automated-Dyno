@@ -50,23 +50,15 @@ with can.Bus(interface='pcan',
                     #print(f"{tx_message.arbitration_id:X}: {tx_message.data}")
   
                 #time.sleep(0.001)                       # Wait for 1s before updating
-            except can.CanOperationError:
-                time.sleep(.05)
-                try:
-                    bus.send(tx_message, timeout=.2)
-                except:
-                    numMissing += 1
-                    continue
-           
-            # except Exception: 
-            #     if(toggle < 10): 
-            #         toggle = toggle +1 
-            #         print(f"{numMissing}")
-            #         print(f"{torque}")
+            except Exception: 
+                if(toggle < 10): 
+                    toggle = toggle +1 
+                    print(f"{numMissing}")
+                    print(f"{torque}")
 
-            #     #time.sleep(sample_time) 
-            #     #print("in except")
-            #     continue
+                #time.sleep(sample_time) 
+                #print("in except")
+                continue
 
                 
 
