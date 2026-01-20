@@ -35,12 +35,13 @@ with can.Bus(interface='pcan',
     with open(file_path, mode='r', newline='') as csvfile:
         reader2 = csv.reader(csvfile)
         # Iterate through CSV
+        counter = 5
         for row in reader2: 
-            numMissing = numMissing + 1
             try: 
+                numMissing = numMissing + 1
                 torque = float(row[1])              # Fetch torque feedback
                 #print(torque)
-
+                
                 data = message.encode({'CMD_TargetAcCurrent': torque})  # Encode message
                 tx_message = can.Message(arbitration_id=0x36, is_extended_id=False,
                             data=data)                # Formulate message
@@ -54,10 +55,11 @@ with can.Bus(interface='pcan',
                 if(toggle < 10): 
                     toggle = toggle +1 
                     print(f"{numMissing}")
-                    print(f"{torque}")
+                    #print(float(row[1]))
 
                 #time.sleep(sample_time) 
                 #print("in except")
+                #print(numMissing)
                 continue
 
                 
