@@ -5,7 +5,7 @@ from can.interfaces.pcan import pcan
 
 # First column time
 # Second column torque
-file_path = r'real_csv.csv'
+file_path = r'ramp_up.csv'
 #write_file = w
 
 numMissing = 0
