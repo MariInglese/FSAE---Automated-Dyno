@@ -27,9 +27,9 @@ with can.Bus(interface='pcan',
         reader1 = csv.reader(csvfile)
         # Get time in between samples 
         first_row = next(reader1)
-        print(first_row)
+       # print(first_row)
         second_row = next(reader1) 
-        print(second_row)
+      #  print(second_row)
         sample_time  = float(second_row[0]) - float(first_row[0]) # 0 is time, 1 is torque
         #print(sample_time)
     with open(file_path, mode='r', newline='') as csvfile:
@@ -38,31 +38,31 @@ with can.Bus(interface='pcan',
         counter = 5
         for row in reader2: 
             try: 
-                numMissing = numMissing + 1
                 torque = float(row[1])              # Fetch torque feedback
-                #print(torque)
                 
                 data = message.encode({'VCU_INV_Torque_Command': torque,'VCU_INV_Speed_Command': 0.0,'VCU_INV_Direction_Command': 1,'VCU_INV_Inverter_Enable': 1,'VCU_INV_Inverter_Discharge': 1,'VCU_INV_Speed_Mode_Enable': 0,'VCU_INV_Torque_Limit_Command': 100.0},strict=False)  # Encode message
-                
-                tx_message = can.Message(arbitration_id=0xC0, is_extended_id=False,
+
+                tx_message = can.Message(arbitration_id=0xAC, is_extended_id=False,
                             data=data)                # Formulate message
                 bus.send(tx_message, timeout=0.2)      # Send message to BUS BUS BUS
                 if tx_message is not None:
                     pass
                     #print(f"{tx_message.arbitration_id:X}: {tx_message.data}")
   
-                time.sleep(0.001)                       # Wait for 1s before updating
+                time.sleep(0.01)                       # Wait for 1s before updating
             except Exception as e:
-                print(f"Exception: {e}") 
-                if(toggle < 10): 
-                    toggle = toggle +1 
-                    print(f"{numMissing}")
-                    #print(float(row[1]))
-
+                #print(f"Exception: {e}") 
+                #if(toggle < 10): 
+                    #toggle = toggle +1 
+                    #print(f"{numMissing}")
+                    #print(float(row[1]
                 #time.sleep(sample_time) 
                 #print("in except")
                 #print(numMissing)
+                numMissing = numMissing + 1
                 continue
+
+print(f"Number of Missed Messages: {numMissing}")      
 
                 
 
