@@ -1,70 +1,32 @@
-# Importing libraries 
-import csv, os, time, math, can, cantools
-import cantools.database 
-from can.interfaces.pcan import pcan
+import can
+import cantools
+import time
 
-# First column time
-# Second column torque
-file_path = r'ramp_up.csv'
-#write_file = w
-
-numMissing = 0
-toggle = 0 
-
-#open and read csv file
-dbc_directory = os.path.join(os.getcwd(), r"C:\\GitHub\\FSAE---Automated-Dyno\DBC Tools\\20230411_Gen5_CAN_DBC_PantherRacing_2024_01_15.dbc")
-dbc_file = dbc_directory
-db = cantools.database.load_file(dbc_file)
+db = cantools.database.load_file('20230411_Gen5_CAN_DBC_PantherRacing_2024_01_15.dbc')
 
 message = db.get_message_by_name('M192_Command_Message')
 
-with can.Bus(interface='pcan',
-            channel='PCAN_USBBUS1',
-            bitrate=1000000,
-            receive_own_messages=False) as bus:
+bus = can.Bus(interface='pcan', channel='PCAN_USBBUS1', bitrate=1000000)
 
-    with open(file_path, mode='r', newline='') as csvfile:
-        reader1 = csv.reader(csvfile)
-        # Get time in between samples 
-        first_row = next(reader1)
-       # print(first_row)
-        second_row = next(reader1) 
-      #  print(second_row)
-        sample_time  = float(second_row[0]) - float(first_row[0]) # 0 is time, 1 is torque
-        #print(sample_time)
-    with open(file_path, mode='r', newline='') as csvfile:
-        reader2 = csv.reader(csvfile)
-        # Iterate through CSV
-        counter = 5
-        for row in reader2: 
-            try: 
-                torque = float(row[1])              # Fetch torque feedback
-                
-                data = message.encode({'VCU_INV_Torque_Command': torque,'VCU_INV_Speed_Command': 0.0,'VCU_INV_Direction_Command': 1,'VCU_INV_Inverter_Enable': 1,'VCU_INV_Inverter_Discharge': 1,'VCU_INV_Speed_Mode_Enable': 0,'VCU_INV_Torque_Limit_Command': 100.0},strict=False)  # Encode message
+def send_dyno_torque(torque_value, enable=1):        
+    signals = {
+        'VCU_INV_Torque_Command': torque_value,
+        'VCU_INV_Inverter_Enable': enable,
+        'VCU_INV_Direction_Command': 1,
+        'VCU_INV_Speed_Command': 0,
+        'VCU_INV_Inverter_Discharge': 0,
+        'VCU_INV_Speed_Mode_Enable': 0,
+        'VCU_INV_Torque_Limit_Command': 100.0
+    }
 
-                tx_message = can.Message(arbitration_id=0xAC, is_extended_id=False,
-                            data=data)                # Formulate message
-                bus.send(tx_message, timeout=0.2)      # Send message to BUS BUS BUS
-                if tx_message is not None:
-                    pass
-                    #print(f"{tx_message.arbitration_id:X}: {tx_message.data}")
-  
-                time.sleep(0.01)                       # Wait for 1s before updating
-            except Exception as e:
-                #print(f"Exception: {e}") 
-                #if(toggle < 10): 
-                    #toggle = toggle +1 
-                    #print(f"{numMissing}")
-                    #print(float(row[1]
-                #time.sleep(sample_time) 
-                #print("in except")
-                #print(numMissing)
-                numMissing = numMissing + 1
-                continue
+    data = message.encode(signals)
 
-print(f"Number of Missed Messages: {numMissing}")      
+    msg = can.Message(arbitration_id=0x700, data=data, is_extended_id=False)
+    bus.send(msg)
 
-                
+    time.sleep(0.01)
 
 
-            
+with open('Regression Code\CSVs\ramp_up.csv', mode='r') as csvfile:
+    for row in csvfile:
+        send_dyno_torque(float(row[1]))
