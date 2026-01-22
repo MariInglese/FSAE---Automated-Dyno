@@ -2,22 +2,14 @@ import can
 import cantools
 import time
 
-db = cantools.database.load_file('20230411_Gen5_CAN_DBC_PantherRacing_2024_01_15.dbc')
+db = cantools.database.load_file('C:\\GitHub\\FSAE---Automated-Dyno\\Regression Code\\DBCs\\dyno_auto.dbc')
 
-message = db.get_message_by_name('M192_Command_Message')
+message = db.get_message_by_name('py_torque')
 
 bus = can.Bus(interface='pcan', channel='PCAN_USBBUS1', bitrate=1000000)
 
 def send_dyno_torque(torque_value, enable=1):        
-    signals = {
-        'VCU_INV_Torque_Command': torque_value,
-        'VCU_INV_Inverter_Enable': enable,
-        'VCU_INV_Direction_Command': 1,
-        'VCU_INV_Speed_Command': 0,
-        'VCU_INV_Inverter_Discharge': 0,
-        'VCU_INV_Speed_Mode_Enable': 0,
-        'VCU_INV_Torque_Limit_Command': 100.0
-    }
+    signals = {'torque': torque_value}
 
     data = message.encode(signals)
 
@@ -27,6 +19,7 @@ def send_dyno_torque(torque_value, enable=1):
     time.sleep(0.01)
 
 
-with open('Regression Code\CSVs\ramp_up.csv', mode='r') as csvfile:
+with open('C:\\GitHub\\FSAE---Automated-Dyno\\Regression Code\\CSVs\\real_csv.csv', mode='r') as csvfile:
     for row in csvfile:
-        send_dyno_torque(float(row[1]))
+        col = row.split(",")
+        send_dyno_torque(float(col[1]))
