@@ -16,10 +16,15 @@ def send_dyno_torque(torque_value, enable=1):
     msg = can.Message(arbitration_id=0x700, data=data, is_extended_id=False)
     bus.send(msg)
 
-    time.sleep(0.01)
-
+    #time.sleep(0.01)
 
 with open('C:\\GitHub\\FSAE---Automated-Dyno\\Regression Code\\CSVs\\real_csv.csv', mode='r') as csvfile:
-    for row in csvfile:
-        col = row.split(",")
-        send_dyno_torque(float(col[1]))
+    try:
+        for row in csvfile:
+            col = row.split(",")
+            logtime = time.time()
+            while (time.time() < logtime + 0.01):
+                send_dyno_torque(float(col[1]) * 10) # Multiply by 10 before sending to preserve decimal point; divide by 10 in Build 
+                time.sleep(0.0001)
+    finally:
+        bus.shutdown()
