@@ -18,7 +18,7 @@ class DynoController:
     def __init__(self, root):
         self.root = root
         self.root.title("FSAE Automated Dyno Tester")
-        self.root.geometry("500x400")
+        self.root.geometry("800x500")
 
         self.running = False
         self.csv_path = tk.StringVar()
@@ -66,10 +66,10 @@ class DynoController:
         ctrl_frame = tk.Frame(root)
         ctrl_frame.pack(pady=20)
 
-        self.start_button = tk.Button(ctrl_frame, text="▶ Start Test", bg="green", fg="white", width=15, command=self.start_thread)
+        self.start_button = tk.Button(ctrl_frame, text="▶ Start Test", font=("Arial",15,"bold"), bg="green", fg="white", width=30, height=5, command=self.start_thread)
         self.start_button.pack(side=tk.LEFT, padx=10)
 
-        self.kill_button = tk.Button(ctrl_frame, text="🟥 Kill", bg="red", fg="white", width=15, command=self.stop_test, state=tk.DISABLED)
+        self.kill_button = tk.Button(ctrl_frame, text="🟥 Kill", font=("Arial",15,"bold"), bg="red", fg="white", width=30, height=5, command=self.stop_test, state=tk.DISABLED)
         self.kill_button.pack(side=tk.LEFT, padx=10)
 
     def on_dropdown_change(self, selection):
