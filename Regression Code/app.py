@@ -110,7 +110,8 @@ class DynoController:
                         col = row.split(",")
                         if len(col) < 2: continue
                         
-                        torque_val = float(col[1]) * 10
+                        torque_val = -1.0 * (float(col[1]) / 4.0)
+                        torque_val = torque_val * 10.0
 
                         # Updates live display
                         self.root.after(0, self.update_live_view, torque_val)
@@ -124,7 +125,13 @@ class DynoController:
                             msg = can.Message(arbitration_id=0x700, data=data, is_extended_id=False)
                             
                             bus.send(msg)
-                            time.sleep(0.0001)
+
+                            SLEEP_TIME = 0.00008  #Change this value to change sleep time
+                            target = time.perf_counter() + SLEEP_TIME
+                            while time.perf_counter() < target:
+                                pass
+
+                            #time.sleep(0.0001)
 
             except Exception as e:
                 error_msg = str(e)
