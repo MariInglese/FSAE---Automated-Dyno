@@ -118,15 +118,16 @@ class DynoController:
 
                         logtime = time.time()
 
+                        SLEEP_TIME = 0.0001
                         # 10ms loop per row
-                        while self.running and (time.time() < logtime + 0.01):
+                        while self.running and (time.time() < logtime + 0.01-SLEEP_TIME):
                             signals = {'torque': torque_val}
                             data = self.message_def.encode(signals)
                             msg = can.Message(arbitration_id=0x700, data=data, is_extended_id=False)
                             
                             bus.send(msg)
 
-                            SLEEP_TIME = 0.00008  #Change this value to change sleep time
+                            #SLEEP_TIME = 0.00001  #Change this value to change sleep time
                             target = time.perf_counter() + SLEEP_TIME
                             while time.perf_counter() < target:
                                 pass
