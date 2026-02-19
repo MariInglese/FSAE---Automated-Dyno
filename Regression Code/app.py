@@ -135,7 +135,7 @@ class DynoController:
                     total_lines = sum(1 for line in f)
                     self.root.after(0,self.set_progress_max(total_lines))
                 # Initialize PCAN Bus
-                bus = can.Bus(interface='virtual', channel='PCAN_USBBUS1', bitrate=1000000)
+                bus = can.Bus(interface='pcan', channel='PCAN_USBBUS1', bitrate=1000000)
 
                 with open(self.csv_path.get(), mode='r') as csvfile:
                     for i, row in enumerate(csvfile):
