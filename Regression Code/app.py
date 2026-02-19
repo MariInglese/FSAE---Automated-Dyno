@@ -57,10 +57,29 @@ class DynoController:
         display_frame = tk.Frame(root, bg="black", padx=10, pady=10)
         display_frame.pack(pady=10,fill=tk.X, padx=20)
 
-        tk.Label(display_frame, text="LIVE TORQUE", fg="white", bg="black", font=("Arial", 10)).pack()
-        self.torque_display = tk.Label(display_frame, text="0.0", fg="#00FF00", bg="black", font=("Courier", 30, "bold"))
+        # Left Side: Torque
+        torque_frame = tk.Frame(display_frame, bg="black")
+        torque_frame.pack(side=tk.LEFT, padx=(200,20))
+
+        tk.Label(torque_frame, text="COMMANDED TORQUE", fg="white", bg="black", font=("Arial", 10)).pack()
+        self.torque_display = tk.Label(torque_frame, text="0.0", fg="#00FF00", bg="black", font=("Courier", 30, "bold"), width=6, anchor='w')
         self.torque_display.pack()
 
+        # Right Side: Speed
+        speed_frame = tk.Frame(display_frame, bg="black")
+        speed_frame.pack(side=tk.LEFT, padx=20)
+
+        tk.Label(speed_frame, text="COMMANDED SPEED", fg="white", bg="black", font=("Arial", 10)).pack()
+        self.speed_display = tk.Label(speed_frame, text="0.0", fg="#00FFFF", bg="black", font=("Courier", 30, "bold"), width=6, anchor='w')
+        self.speed_display.pack()
+
+
+        # PROGRESS BAR
+        tk.Label(root, text="Progress").pack(pady=10)
+        self.progressbar = ttk.Progressbar(root, orient='horizontal', length=600, mode='determinate')
+        self.progressbar.pack(pady=5)
+        self.progress_label = tk.Label(root, text="0 / 0 Lines")
+        self.progress_label.pack()
 
         # Control
         ctrl_frame = tk.Frame(root)
@@ -89,39 +108,60 @@ class DynoController:
         self.start_button.config(state=tk.DISABLED)
         self.kill_button.config(state=tk.NORMAL)
 
+        self.progressbar['value'] = 0
+        self.progress_label.config(text="Initializing...")
+
         test_thread = threading.Thread(target=self.run_can_test, daemon=True)
         test_thread.start()
     
-    def update_live_view(self, value):
-        display_val = f"{value / 10.0}"
-        self.torque_display.config(text=display_val)
+    def update_live_view(self, torque, speed):
+        torque_val = f"{torque / 10.0}"
+        self.torque_display.config(text=torque_val)
+        self.speed_display.config(text=speed)
+
+    def set_progress_max(self, total_lines):
+        self.progressbar['maximum'] = total_lines
+        self.progressbar['value'] = 0
+
+    def update_progress(self, current_line, total_lines):
+        self.progressbar['value'] = current_line
+        self.progress_label.config(text=str(current_line) + "/" + str(total_lines))
 
     def run_can_test(self):
             bus = None
             try:
+                # Pre count lines in CSV
+                with open(self.csv_path.get(), mode='r') as f:
+                    total_lines = sum(1 for line in f)
+                    self.root.after(0,self.set_progress_max(total_lines))
                 # Initialize PCAN Bus
-                bus = can.Bus(interface='pcan', channel='PCAN_USBBUS1', bitrate=1000000)
-                
+                bus = can.Bus(interface='virtual', channel='PCAN_USBBUS1', bitrate=1000000)
+
                 with open(self.csv_path.get(), mode='r') as csvfile:
-                    for row in csvfile:
+                    for i, row in enumerate(csvfile):
                         if not self.running: # Check if Kill button was pressed
                             break
-                            
+                        
+                        # Update Progress Bar
+                        self.root.after(0, self.update_progress(i + 1, total_lines))
+
                         col = row.split(",")
                         if len(col) < 2: continue
                         
                         torque_val = -1.0 * (float(col[1]) / 4.0)
-                        torque_val = torque_val * 10.0
+                        Emrax_Torque = torque_val * 10.0
 
+                        DTI_Speed = float(col[2]) * 8.72
                         # Updates live display
-                        self.root.after(0, self.update_live_view, torque_val)
+                        self.root.after(0, self.update_live_view, Emrax_Torque, DTI_Speed)
 
                         logtime = time.time()
 
                         SLEEP_TIME = 0.0001
                         # 10ms loop per row
                         while self.running and (time.time() < logtime + 0.01-SLEEP_TIME):
-                            signals = {'torque': torque_val}
+                            signals = {'torque': Emrax_Torque, 
+                                       'speed': DTI_Speed}
                             data = self.message_def.encode(signals)
                             msg = can.Message(arbitration_id=0x700, data=data, is_extended_id=False)
                             

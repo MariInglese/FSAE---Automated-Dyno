@@ -36,7 +36,7 @@ BS_:
 BU_:
 
 
-BO_ 1792 py_torque: 2 Vector__XXX
+BO_ 1792 py_torque: 4 Vector__XXX
  SG_ speed : 16|16@1- (1,0) [0|0] "" Vector__XXX
  SG_ torque : 0|16@1- (1,0) [0|0] "" Vector__XXX
 
