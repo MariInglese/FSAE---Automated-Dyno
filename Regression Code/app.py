@@ -18,9 +18,11 @@ class DynoController:
     def __init__(self, root):
         self.root = root
         self.root.title("FSAE Automated Dyno Tester")
-        self.root.geometry("800x500")
+        self.root.geometry("800x550")
 
         self.running = False
+        self.paused = False
+        self.simulation_mode = tk.BooleanVar(value=True)
         self.csv_path = tk.StringVar()
         self.dbc_path = DBC_FILE_PATH
         
@@ -81,10 +83,19 @@ class DynoController:
         ctrl_frame = tk.Frame(root)
         ctrl_frame.pack(pady=20)
 
-        self.start_button = tk.Button(ctrl_frame, text="▶ Start Test", font=("Arial",15,"bold"), bg="green", fg="white", width=30, height=5, command=self.start_thread)
+        self.sim_check = tk.Checkbutton(ctrl_frame, text="Simulation Mode (Virtual CAN)", variable=self.simulation_mode, font=("Arial",10))
+        self.sim_check.pack(side=tk.TOP, pady=5)
+
+        button_frame = tk.Frame(ctrl_frame)
+        button_frame.pack()
+
+        self.start_button = tk.Button(button_frame, text="▶ Start Test", font=("Arial",15,"bold"), bg="green", fg="white", width=20, height=3, command=self.start_thread)
         self.start_button.pack(side=tk.LEFT, padx=10)
 
-        self.kill_button = tk.Button(ctrl_frame, text="🟥 Kill", font=("Arial",15,"bold"), bg="red", fg="white", width=30, height=5, command=self.stop_test, state=tk.DISABLED)
+        self.pause_button = tk.Button(button_frame, text="⏸ Pause", font=("Arial",15,"bold"), bg="orange", fg="white", width=20, height=3, command=self.toggle_pause, state=tk.DISABLED)
+        self.pause_button.pack(side=tk.LEFT, padx=10)
+
+        self.kill_button = tk.Button(button_frame, text="🟥 Kill", font=("Arial",15,"bold"), bg="red", fg="white", width=20, height=3, command=self.stop_test, state=tk.DISABLED)
         self.kill_button.pack(side=tk.LEFT, padx=10)
 
     def on_dropdown_change(self, selection):
@@ -112,12 +123,21 @@ class DynoController:
             self.on_dropdown_change(filename)
             messagebox.showinfo("Success", f"Added {filename} to CSVs folder and selected it.")
 
+    def toggle_pause(self):
+        self.paused = not self.paused
+        if self.paused:
+            self.pause_button.config(text="▶ Resume", bg="green")
+        else:
+            self.pause_button.config(text="⏸ Pause", bg="orange")
+
     def start_thread(self):
         if not self.csv_path.get():
             messagebox.showwarning("Input Required", "Please select a CSV file first.")
             return
         self.running = True
+        self.paused = False
         self.start_button.config(state=tk.DISABLED)
+        self.pause_button.config(state=tk.NORMAL, text="⏸ Pause", bg="orange")
         self.kill_button.config(state=tk.NORMAL)
 
         self.progressbar['value'] = 0
@@ -147,11 +167,23 @@ class DynoController:
                     total_lines = sum(1 for line in f)
                     self.root.after(0,self.set_progress_max(total_lines))
                 # Initialize PCAN Bus
-                bus = can.Bus(interface='virtual', channel='PCAN_USBBUS1', bitrate=1000000)
+                interface_type = 'virtual' if self.simulation_mode.get() else 'pcan'
+                bus = can.Bus(interface=interface_type, channel='PCAN_USBBUS1', bitrate=1000000)
 
                 with open(self.csv_path.get(), mode='r') as csvfile:
                     for i, row in enumerate(csvfile):
                         if not self.running: # Check if Kill button was pressed
+                            break
+                        
+                        while self.paused and self.running:
+                            signals = {'torque': 0.0, 'speed': 0.0}
+                            data = self.message_def.encode(signals)
+                            msg = can.Message(arbitration_id=0x700, data=data, is_extended_id=False)
+                            bus.send(msg)
+                            self.root.after(0, self.update_live_view, 0.0, 0.0)
+                            time.sleep(0.01)
+
+                        if not self.running:
                             break
                         
                         # Update Progress Bar
@@ -204,6 +236,7 @@ class DynoController:
 
     def reset_ui(self):
         self.start_button.config(state=tk.NORMAL)
+        self.pause_button.config(state=tk.DISABLED, text="⏸ Pause", bg="orange")
         self.kill_button.config(state=tk.DISABLED)
 
 
