@@ -46,12 +46,8 @@ class DynoController:
         self.dropdown.pack(pady=5)
 
         # Custom Upload
-        tk.Label(root, text="OR Use a Custom File:", font=('Arial', 10, 'italic')).pack(pady=(15, 0))
-        file_frame = tk.Frame(root)
-        file_frame.pack(pady=5)
-        self.path_entry = tk.Entry(file_frame, width=40)
-        self.path_entry.pack(side=tk.LEFT, padx=5)
-        tk.Button(file_frame, text="Browse", command=self.browse_csv).pack(side=tk.LEFT)
+        tk.Label(root, text="Add a new CSV to Library:", font=('Arial', 10, 'italic')).pack(pady=(15, 0))
+        tk.Button(root, text="Browse for CSV", command=self.browse_csv).pack(pady=5)
 
         # LIVE DISPLAY
         display_frame = tk.Frame(root, bg="black", padx=10, pady=10)
@@ -59,18 +55,18 @@ class DynoController:
 
         # Left Side: Torque
         torque_frame = tk.Frame(display_frame, bg="black")
-        torque_frame.pack(side=tk.LEFT, padx=(200,20))
+        torque_frame.pack(side=tk.LEFT, expand=True)
 
         tk.Label(torque_frame, text="COMMANDED TORQUE", fg="white", bg="black", font=("Arial", 10)).pack()
-        self.torque_display = tk.Label(torque_frame, text="0.0", fg="#00FF00", bg="black", font=("Courier", 30, "bold"), width=6, anchor='w')
+        self.torque_display = tk.Label(torque_frame, text="0.0", fg="#00FF00", bg="black", font=("Courier", 30, "bold"), width=7, anchor='w')
         self.torque_display.pack()
 
         # Right Side: Speed
         speed_frame = tk.Frame(display_frame, bg="black")
-        speed_frame.pack(side=tk.LEFT, padx=20)
+        speed_frame.pack(side=tk.LEFT, expand=True)
 
         tk.Label(speed_frame, text="COMMANDED SPEED", fg="white", bg="black", font=("Arial", 10)).pack()
-        self.speed_display = tk.Label(speed_frame, text="0.0", fg="#00FFFF", bg="black", font=("Courier", 30, "bold"), width=6, anchor='w')
+        self.speed_display = tk.Label(speed_frame, text="0.0", fg="#00FFFF", bg="black", font=("Courier", 30, "bold"), width=7, anchor='w')
         self.speed_display.pack()
 
 
@@ -97,8 +93,24 @@ class DynoController:
     def browse_csv(self):
         path = filedialog.askopenfilename(filetypes=[("CSV files", "*.csv")])
         if path:
-            self.csv_path.set(path)
-            self.selected_csv.set("Custom File...")
+            filename = os.path.basename(path)
+            dest_path = os.path.join(DEFAULT_CSV_FOLDER, filename)
+            
+            if not os.path.exists(dest_path):
+                with open(path, 'rb') as src, open(dest_path, 'wb') as dst:
+                    dst.write(src.read())
+            
+            if filename not in self.available_csvs:
+                self.available_csvs.append(filename)
+                
+                menu = self.dropdown["menu"]
+                menu.delete(0, "end")
+                for csv_file in self.available_csvs:
+                    menu.add_command(label=csv_file, command=tk._setit(self.selected_csv, csv_file, self.on_dropdown_change))
+                    
+            self.selected_csv.set(filename)
+            self.on_dropdown_change(filename)
+            messagebox.showinfo("Success", f"Added {filename} to CSVs folder and selected it.")
 
     def start_thread(self):
         if not self.csv_path.get():
@@ -135,7 +147,7 @@ class DynoController:
                     total_lines = sum(1 for line in f)
                     self.root.after(0,self.set_progress_max(total_lines))
                 # Initialize PCAN Bus
-                bus = can.Bus(interface='pcan', channel='PCAN_USBBUS1', bitrate=1000000)
+                bus = can.Bus(interface='virtual', channel='PCAN_USBBUS1', bitrate=1000000)
 
                 with open(self.csv_path.get(), mode='r') as csvfile:
                     for i, row in enumerate(csvfile):
