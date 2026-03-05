@@ -36,7 +36,7 @@ class DynoController:
         self.message_def = self.db.get_message_by_name('py_torque')
 
         # === 1. HEADER SECTION ===
-        self.header = ctk.CTkLabel(root, text="FSAE Automated Dyno Control 🏎️", font=ctk.CTkFont(size=24, weight="bold"))
+        self.header = ctk.CTkLabel(root, text="FSAE Automated Dyno Control", font=ctk.CTkFont(size=24, weight="bold"))
         self.header.pack(pady=(20, 10))
 
         # === 2. CONFIGURATION SECTION ===
@@ -125,7 +125,7 @@ class DynoController:
         self.kill_button = ctk.CTkButton(self.ctrl_frame, text="🟥 Kill", font=ctk.CTkFont(size=18, weight="bold"), fg_color=self.c_red, hover_color=self.c_red_h, width=180, height=50, command=self.stop_test, state="disabled")
         self.kill_button.pack(side="left", padx=10)
 
-    # === LOGIC ===
+    # === Functions ===
 
     def on_dropdown_change(self, selection):
         self.csv_path.set(os.path.join(DEFAULT_CSV_FOLDER, selection))
@@ -225,7 +225,7 @@ class DynoController:
                     
                     torque_val = -1.0 * (float(col[1]) / 4.0)
                     Emrax_Torque = torque_val * 10.0
-                    DTI_Speed = float(col[2]) * 8.72
+                    DTI_Speed = float(col[2])
                     
                     # Updates live display
                     self.root.after(0, self.update_live_view, Emrax_Torque, DTI_Speed)
