@@ -221,7 +221,7 @@ class DynoController:
                     self.root.after(0, self.update_progress, i + 1)
 
                     col = row.split(",")
-                    if len(col) < 2: continue
+                    if len(col) < 3: continue
                     
                     torque_val = -1.0 * (float(col[1]) / 4.0)
                     Emrax_Torque = torque_val * 10.0
