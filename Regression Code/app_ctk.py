@@ -1,4 +1,3 @@
-import customtkinter as ctk
 import tkinter as tk
 from tkinter import filedialog, messagebox
 import time
@@ -6,6 +5,7 @@ import threading
 import os
 
 try:
+    import customtkinter as ctk
     import can
     import cantools
 except ImportError:
