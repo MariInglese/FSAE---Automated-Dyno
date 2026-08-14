@@ -1,4 +1,3 @@
-import customtkinter as ctk
 import tkinter as tk
 from tkinter import filedialog, messagebox
 import time
@@ -6,6 +5,7 @@ import threading
 import os
 
 try:
+    import customtkinter as ctk
     import can
     import cantools
 except ImportError:
@@ -71,6 +71,47 @@ class DynoController:
         self.sim_check = ctk.CTkCheckBox(self.config_frame, text="Simulation Mode (Virtual CAN)", variable=self.simulation_mode, font=ctk.CTkFont(size=13))
         self.sim_check.pack(pady=(0, 15))
 
+        # --- Advanced Settings ---
+        self.adv_settings_frame = ctk.CTkFrame(self.config_frame, fg_color="transparent")
+        self.adv_settings_frame.pack(pady=(0, 10), fill="x", padx=10)
+
+        self.adv_toggle_btn = ctk.CTkButton(self.adv_settings_frame, text="▶ Advanced Settings (Math Modifiers)", 
+                                            font=ctk.CTkFont(size=13, weight="bold"), 
+                                            fg_color="transparent", text_color=("gray10", "gray90"),
+                                            hover_color=("gray70", "gray30"), anchor="w",
+                                            command=self.toggle_adv_settings)
+        self.adv_toggle_btn.pack(fill="x", pady=(0, 5))
+
+        self.math_frame = ctk.CTkFrame(self.adv_settings_frame, fg_color="transparent")
+
+        # Torque modifiers
+        self.torque_math_frame = ctk.CTkFrame(self.math_frame, fg_color="transparent")
+        self.torque_math_frame.pack(side="left", expand=True)
+        
+        ctk.CTkLabel(self.torque_math_frame, text="Torque +:").pack(side="left", padx=(0, 5))
+        self.torque_add_var = tk.StringVar(value="0")
+        self.torque_add_entry = ctk.CTkEntry(self.torque_math_frame, textvariable=self.torque_add_var, width=60, height=25)
+        self.torque_add_entry.pack(side="left", padx=(0, 15))
+
+        ctk.CTkLabel(self.torque_math_frame, text="Torque *:").pack(side="left", padx=(0, 5))
+        self.torque_mult_var = tk.StringVar(value="1")
+        self.torque_mult_entry = ctk.CTkEntry(self.torque_math_frame, textvariable=self.torque_mult_var, width=60, height=25)
+        self.torque_mult_entry.pack(side="left")
+
+        # Speed modifiers
+        self.speed_math_frame = ctk.CTkFrame(self.math_frame, fg_color="transparent")
+        self.speed_math_frame.pack(side="left", expand=True)
+
+        ctk.CTkLabel(self.speed_math_frame, text="Speed +:").pack(side="left", padx=(0, 5))
+        self.speed_add_var = tk.StringVar(value="0")
+        self.speed_add_entry = ctk.CTkEntry(self.speed_math_frame, textvariable=self.speed_add_var, width=60, height=25)
+        self.speed_add_entry.pack(side="left", padx=(0, 15))
+
+        ctk.CTkLabel(self.speed_math_frame, text="Speed *:").pack(side="left", padx=(0, 5))
+        self.speed_mult_var = tk.StringVar(value="1")
+        self.speed_mult_entry = ctk.CTkEntry(self.speed_math_frame, textvariable=self.speed_mult_var, width=60, height=25)
+        self.speed_mult_entry.pack(side="left")
+
         # === 3. LIVE DISPLAY SECTION ===
         self.display_frame = ctk.CTkFrame(root, fg_color="#1a1a1a", corner_radius=15)
         self.display_frame.pack(padx=20, pady=10, fill="x")
@@ -127,6 +168,14 @@ class DynoController:
 
     # === Functions ===
 
+    def toggle_adv_settings(self):
+        if self.math_frame.winfo_ismapped():
+            self.math_frame.pack_forget()
+            self.adv_toggle_btn.configure(text="▶ Advanced Settings (Math Modifiers)")
+        else:
+            self.math_frame.pack(fill="x")
+            self.adv_toggle_btn.configure(text="▼ Advanced Settings (Math Modifiers)")
+
     def on_dropdown_change(self, selection):
         self.csv_path.set(os.path.join(DEFAULT_CSV_FOLDER, selection))
 
@@ -175,7 +224,7 @@ class DynoController:
     
     def update_live_view(self, torque, speed):
         torque_val = f"{torque / 10.0:.1f}"
-        speed_val = f"{speed:.1f}"
+        speed_val = f"{speed * 8.72:.1f}"
         self.torque_display.configure(text=torque_val)
         self.speed_display.configure(text=speed_val)
 
@@ -223,9 +272,32 @@ class DynoController:
                     col = row.split(",")
                     if len(col) < 3: continue
                     
+                    try:
+                        t_add = float(self.torque_add_var.get() or 0)
+                    except ValueError:
+                        t_add = 0.0
+                    try:
+                        t_mult = float(self.torque_mult_var.get() or 1)
+                        if(t_mult > 5): raise Exception("Torque multiplier too high (5x max)")
+                    except ValueError:
+                        t_mult = 1.0
+
+                    try:
+                        s_add = float(self.speed_add_var.get() or 0)
+                    except ValueError:
+                        s_add = 0.0
+                    try:
+                        s_mult = float(self.speed_mult_var.get() or 1)
+                        if(s_mult > 5): raise Exception("Speed multiplier too high (5x max)")
+                    except ValueError:
+                        s_mult = 1.0
+
                     torque_val = -1.0 * (float(col[1]) / 4.0)
+                    torque_val = (torque_val * t_mult) + t_add
                     Emrax_Torque = torque_val * 10.0
+                    
                     DTI_Speed = float(col[2])
+                    DTI_Speed = (DTI_Speed * s_mult) + s_add
                     
                     # Updates live display
                     self.root.after(0, self.update_live_view, Emrax_Torque, DTI_Speed)
